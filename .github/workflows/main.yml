@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   buildForAllSupportedPlatforms:
     name: Build for ${{ matrix.targetPlatform }}
@@ -57,6 +60,8 @@ jobs:
         with:
           name: Build-WebGL
           path: build/WebGL
+      - name: Debug - List Files 🔍
+        run: echo "Prüfe Inhalt von build/WebGL:" ls -R build/WebGL
 
       - name: Deploy to GitHub Pages 🌐
         uses: JamesIves/github-pages-deploy-action@v4
@@ -98,6 +103,7 @@ jobs:
       #   with:
       #     folder: build/WebGL/WebGL
       #     branch: gh-pages
+
 
 
 
