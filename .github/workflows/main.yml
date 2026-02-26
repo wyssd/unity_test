@@ -38,12 +38,31 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
+          projectPath: unity_game
           targetPlatform: ${{ matrix.targetPlatform }}
       - uses: actions/upload-artifact@v4
         with:
           name: Build-${{ matrix.targetPlatform }}
           path: build/${{ matrix.targetPlatform }}
+  deployToPages:
+    needs: buildForAllSupportedPlatforms
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
+      - name: Download WebGL Artifact 📥
+        uses: actions/download-artifact@v4
+        with:
+          name: Build-WebGL
+          path: build/WebGL
+
+      - name: Deploy to GitHub Pages 🌐
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: build/WebGL/WebGL # Prüfe nach dem ersten Build, ob der Pfad genau so stimmt
+          branch: gh-pages
 # name: Unity WebGL Build and Deploy 🚀
 
 # on:
@@ -79,5 +98,6 @@ jobs:
       #   with:
       #     folder: build/WebGL/WebGL
       #     branch: gh-pages
+
 
 
