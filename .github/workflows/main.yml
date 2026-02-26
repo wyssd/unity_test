@@ -1,0 +1,35 @@
+name: Unity WebGL Build and Deploy 🚀
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_TTT:
+    name: Build for WebGL 🛠️
+    runs-on: ubuntu-latest
+    steps:
+      -  name: Beginning
+         run: echo "hello"
+      # - name: Checkout code
+      #   uses: actions/checkout@v4
+
+      # - name: Cache Library ⚡
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: Library
+      #     key: Library-WebGL
+
+      # - name: Build Project 🏗️
+      #   uses: game-ci/unity-builder@v4
+      #   env:
+      #     UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      #   with:
+      #     targetPlatform: WebGL
+
+      # - name: Deploy to GitHub Pages 🌐
+      #   uses: JamesIves/github-pages-deploy-action@v4
+      #   with:
+      #     folder: build/WebGL/WebGL
+      #     branch: gh-pages
