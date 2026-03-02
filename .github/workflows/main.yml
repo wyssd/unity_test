@@ -1,4 +1,4 @@
-name: Build project
+name: WebGL Fast Build & Deploy
 
 on:
   push:
@@ -9,101 +9,59 @@ permissions:
   contents: write
 
 jobs:
-  buildForAllSupportedPlatforms:
-    name: Build for ${{ matrix.targetPlatform }}
+  build:
+    name: Build WebGL 🛠️
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        targetPlatform:
-          # - StandaloneOSX # Build a macOS standalone (Intel 64-bit).
-          # - StandaloneWindows # Build a Windows standalone.
-          - StandaloneWindows64 # Build a Windows 64-bit standalone.
-          # - StandaloneLinux64 # Build a Linux 64-bit standalone.
-          # - iOS # Build an iOS player.
-          # - Android # Build an Android .apk standalone app.
-          - WebGL # WebGL.
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        # lfs: true wurde entfernt, da nicht benötigt
+
+      - name: Cache Unity Library ⚡
+        uses: actions/cache@v4
         with:
-          fetch-depth: 0
-          lfs: true
-      - uses: actions/cache@v3
-        with:
-          path: Library
-          key: Library-${{ matrix.targetPlatform }}
-          restore-keys: Library-
-      - if: matrix.targetPlatform == 'Android'
-        uses: jlumbroso/free-disk-space@v1.3.1
-      - uses: game-ci/unity-builder@v4
+          path: unity_game/Library
+          # Der Key sorgt dafür, dass der Cache nur erneuert wird, wenn sich die Unity-Version ändert
+          key: Library-WebGL-${{ hashFiles('unity_game/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Library-WebGL-
+
+      - name: Unity Builder 🏗️
+        uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           projectPath: unity_game
-          targetPlatform: ${{ matrix.targetPlatform }}
-      - uses: actions/upload-artifact@v4
+          targetPlatform: WebGL
+          # Verhindert unnötige Kompression während des Builds, falls in Unity LZ4 eingestellt ist
+          buildMethod: UnityEditor.BuildPlayerWindow.BuildPlayer 
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: Build-${{ matrix.targetPlatform }}
-          path: build/${{ matrix.targetPlatform }}
-  deployToPages:
-    needs: buildForAllSupportedPlatforms
+          name: WebGL-Build
+          path: build/WebGL
+
+  deploy:
+    name: Deploy to Dev Folder 🚀
+    needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download WebGL Artifact 📥
+      - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
-          name: Build-WebGL
-          path: build/WebGL
-      - name: Debug - List Files 🔍
-        run: echo "Prüfe Inhalt von build/WebGL:" ls -R build/WebGL
+          name: WebGL-Build
+          path: build-temp
 
-      - name: Deploy to GitHub Pages 🌐
+      - name: Deploy to GitHub Pages (dev folder)
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: build/WebGL/WebGL # Prüfe nach dem ersten Build, ob der Pfad genau so stimmt
+          folder: build-temp/WebGL
+          target-folder: dev # Erstellt den Ordner automatisch
           branch: gh-pages
-# name: Unity WebGL Build and Deploy 🚀
-
-# on:
-#   push:
-#     branches:
-#       - main
-
-# jobs:
-#   build_TTT:
-#     name: Build for WebGL 🛠️
-#     runs-on: ubuntu-latest
-#     steps:
-#       -  name: Beginning
-#          run: echo "hello"
-      # - name: Checkout code
-      #   uses: actions/checkout@v4
-
-      # - name: Cache Library ⚡
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: Library
-      #     key: Library-WebGL
-
-      # - name: Build Project 🏗️
-      #   uses: game-ci/unity-builder@v4
-      #   env:
-      #     UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-      #   with:
-      #     targetPlatform: WebGL
-
-      # - name: Deploy to GitHub Pages 🌐
-      #   uses: JamesIves/github-pages-deploy-action@v4
-      #   with:
-      #     folder: build/WebGL/WebGL
-      #     branch: gh-pages
-
-
-
-
+          clean: false # WICHTIG: Verhindert, dass andere Ordner im Branch gelöscht werden
