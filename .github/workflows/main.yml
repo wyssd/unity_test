@@ -1,16 +1,18 @@
-name: WebGL Fast Build & Deploy
+name: Unity Multi-Branch Workflow
 
 on:
   push:
     branches:
       - main
+      - dev
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build WebGL 🛠️
+  # --- 1. JOB: WebGL Build (für beide Branches) ---
+  buildWebGL:
+    name: Build WebGL 🌐
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -20,12 +22,11 @@ jobs:
         uses: actions/cache@v4
         with:
           path: unity_game/Library
-          # Der Key sorgt dafür, dass der Cache nur erneuert wird, wenn sich die Unity-Version ändert
+          # Plattform-spezifischer Cache-Key, damit WebGL und Windows sich nicht stören
           key: Library-WebGL-${{ hashFiles('unity_game/ProjectSettings/ProjectVersion.txt') }}
-          restore-keys: |
-            Library-WebGL-
+          restore-keys: Library-WebGL-
 
-      - name: Unity Builder 🏗️
+      - name: Build WebGL
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -35,31 +36,73 @@ jobs:
           projectPath: unity_game
           targetPlatform: WebGL
 
-      - name: Upload Build Artifact
+      - name: Upload WebGL Artifact
         uses: actions/upload-artifact@v4
         with:
           name: WebGL-Build
           path: build/WebGL
 
+  # --- 2. JOB: Windows Build (NUR für main) ---
+  buildWindows:
+    name: Build Windows EXE 🪟
+    if: github.ref == 'refs/heads/main' # Diese Zeile sorgt dafür, dass der Job nur bei main läuft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Cache Unity Library ⚡
+        uses: actions/cache@v4
+        with:
+          path: unity_game/Library
+          key: Library-Windows-${{ hashFiles('unity_game/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-Windows-
+
+      - name: Build Windows
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: unity_game
+          targetPlatform: StandaloneWindows64
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-Build-Exe
+          path: build/StandaloneWindows64
+
+  # --- 3. JOB: Deployment (WebGL in den richtigen Ordner schieben) ---
   deploy:
-    name: Deploy to Dev Folder 🚀
-    needs: build
+    name: Deploy to Pages 🚀
+    needs: buildWebGL
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download Artifact
+      - name: Download WebGL Artifact
         uses: actions/download-artifact@v4
         with:
           name: WebGL-Build
           path: build-temp
 
-      - name: Deploy to GitHub Pages (dev folder)
+      # Logik zur Bestimmung des Zielordners (dev oder prod)
+      - name: Set Target Folder
+        id: folder_logic
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "dest=prod" >> $GITHUB_OUTPUT
+          else
+            echo "dest=dev" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: build-temp/WebGL
-          target-folder: dev # Erstellt den Ordner automatisch
-          branch: gh-pages
-          clean: false # WICHTIG: Verhindert, dass andere Ordner im Branch gelöscht werden
-
+          target-folder: ${{ steps.folder_logic.outputs.dest }} # Nutzt die Variable von oben
+          branch: pages # Dein Ziel-Branch für die Webseite
+          clean: false # WICHTIG: Verhindert, dass der dev-Ordner den prod-Ordner löscht!
