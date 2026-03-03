@@ -10,20 +10,18 @@ permissions:
   contents: write
 
 jobs:
-  # --- 1. JOB: WebGL Build (für beide Branches) ---
   buildWebGL:
-    name: Build WebGL 🌐
+    name: Build WebGL
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Cache Unity Library ⚡
+      - name: Cache Unity Library
         uses: actions/cache@v4
         with:
-          path: unity_game/Library
-          # Plattform-spezifischer Cache-Key, damit WebGL und Windows sich nicht stören
-          key: Library-WebGL-${{ hashFiles('unity_game/ProjectSettings/ProjectVersion.txt') }}
+          path: Library
+          key: Library-WebGL-${{ hashFiles('ProjectSettings/ProjectVersion.txt') }}
           restore-keys: Library-WebGL-
 
       - name: Build WebGL
@@ -33,7 +31,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          projectPath: unity_game
+          projectPath: .
           targetPlatform: WebGL
 
       - name: Upload WebGL Artifact
@@ -42,20 +40,19 @@ jobs:
           name: WebGL-Build
           path: build/WebGL
 
-  # --- 2. JOB: Windows Build (NUR für main) ---
   buildWindows:
-    name: Build Windows EXE 🪟
-    if: github.ref == 'refs/heads/main' # Diese Zeile sorgt dafür, dass der Job nur bei main läuft
+    name: Build Windows EXE
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Cache Unity Library ⚡
+      - name: Cache Unity Library
         uses: actions/cache@v4
         with:
-          path: unity_game/Library
-          key: Library-Windows-${{ hashFiles('unity_game/ProjectSettings/ProjectVersion.txt') }}
+          path: Library
+          key: Library-Windows-${{ hashFiles('ProjectSettings/ProjectVersion.txt') }}
           restore-keys: Library-Windows-
 
       - name: Build Windows
@@ -65,7 +62,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          projectPath: unity_game
+          projectPath: .
           targetPlatform: StandaloneWindows64
 
       - name: Upload Windows Artifact
@@ -74,9 +71,8 @@ jobs:
           name: Windows-Build-Exe
           path: build/StandaloneWindows64
 
-  # --- 3. JOB: Deployment (WebGL in den richtigen Ordner schieben) ---
   deploy:
-    name: Deploy to Pages 🚀
+    name: Deploy to Pages
     needs: buildWebGL
     runs-on: ubuntu-latest
     steps:
@@ -89,7 +85,6 @@ jobs:
           name: WebGL-Build
           path: build-temp
 
-      # Logik zur Bestimmung des Zielordners (dev oder prod)
       - name: Set Target Folder
         id: folder_logic
         run: |
@@ -103,6 +98,6 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: build-temp/WebGL
-          target-folder: ${{ steps.folder_logic.outputs.dest }} # Nutzt die Variable von oben
-          branch: pages # Dein Ziel-Branch für die Webseite
-          clean: false # WICHTIG: Verhindert, dass der dev-Ordner den prod-Ordner löscht!
+          target-folder: ${{ steps.folder_logic.outputs.dest }}
+          branch: pages
+          clean: false
