@@ -1,0 +1,10 @@
+documentation:
+  - changed-files:
+    - any-glob-to-any-file: 'doc/**/*'
+  - head-branch: ['^doc/.*']
+
+feature:
+  - head-branch: ['^feature/.*']
+
+bug:
+  - head-branch: ['^bug/.*']
