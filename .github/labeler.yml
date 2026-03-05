@@ -11,3 +11,4 @@ bug:
 
 skip-changelog:
   - base-branch: ['main']
+    head-branch: ['dev']
