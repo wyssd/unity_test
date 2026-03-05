@@ -106,21 +106,61 @@ jobs:
         with:
           name: Windows-Build-Exe
           path: build/StandaloneWindows64
+  buildLinux:
+    name: Build Linux
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Linux-${{ hashFiles('ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-Linux-
+
+      - name: Build Linux
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          targetPlatform: StandaloneLinux64
+
+      - name: Upload Linux Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Linux-Build-Binary
+          path: build/StandaloneLinux64
 
   release:
     name: Create GitHub Release
-    needs: buildWindows
+    needs: [buildWindows, buildLinux]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
-      - name: Checkout (wird für das Zippen benötigt)
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download artifact
+      - name: Download Windows Artifact
         uses: actions/download-artifact@v4
         with:
           name: Windows-Build-Exe
           path: Windows-Build
+      - name: Zip Windows
+        run: zip -r Windows-Release-${{ github.ref_name }}.zip Windows-Build/
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Linux-Build-Binary
+          path: Linux-Build
+      - name: Zip Linux
+        run: zip -r Linux-Release-${{ github.ref_name }}.zip Linux-Build/
 
       - name: Zip Build
         run: zip -r Windows-Release-${{ github.ref_name }}.zip Windows-Build/
@@ -132,9 +172,12 @@ jobs:
             Automatic release from tag ${{ github.ref_name }}
             
             ---
-          files: Windows-Release-${{ github.ref_name }}.zip
+          files: |
+            Windows-Release-${{ github.ref_name }}.zip
+            Linux-Release-${{ github.ref_name }}.zip
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
