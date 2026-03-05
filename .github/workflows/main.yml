@@ -163,7 +163,7 @@ jobs:
       - name: Zip Linux
         run: zip -r Linux-Release-${{ github.ref_name }}.zip Linux-Build/
 
-      - name: Create GitHub Release
+      - name: Release Content
         uses: softprops/action-gh-release@v2
         with:
           body: |
