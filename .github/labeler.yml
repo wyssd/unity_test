@@ -8,3 +8,7 @@ feature:
 
 bug:
   - head-branch: ['^bug/.*']
+
+skip-changelog:
+  - base-branch: ['main']
+    head-branch: ['dev']
