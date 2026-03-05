@@ -63,9 +63,9 @@ jobs:
         id: folder_logic
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "dest=prod" >> $GITHUB_OUTPUT
+            echo "dest=prod/webgl" >> $GITHUB_OUTPUT
           else
-            echo "dest=dev" >> $GITHUB_OUTPUT
+            echo "dest=dev/webgl" >> $GITHUB_OUTPUT
           fi
 
       - name: Deploy to GitHub Pages
@@ -179,6 +179,7 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 
 
