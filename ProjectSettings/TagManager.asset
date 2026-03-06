@@ -2,7 +2,7 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-  serializedVersion: 3
+  serializedVersion: 2
   tags: []
   layers:
   - Default
@@ -41,23 +41,36 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
-  - name: Ground
-    uniqueID: 3790795775
-    locked: 0
-  - name: GroundTop
-    uniqueID: 2197908527
-    locked: 0
-  - name: Top
-    uniqueID: 1475437943
-    locked: 0
-  - name: Player
-    uniqueID: 3651897373
-    locked: 0
-  - name: WalkBehind
-    uniqueID: 958433513
-    locked: 0
-  - name: Isometric Top
-    uniqueID: 2958297897
-    locked: 0
   m_RenderingLayers:
   - Default
+  - Light Layer 1
+  - Light Layer 2
+  - Light Layer 3
+  - Light Layer 4
+  - Light Layer 5
+  - Light Layer 6
+  - Light Layer 7
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
